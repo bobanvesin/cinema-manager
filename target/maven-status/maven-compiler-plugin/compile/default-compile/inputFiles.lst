@@ -1,1 +1,16 @@
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/MainApp.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/controller/CustomerController.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/CustomerDao.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/CustomerDaoImpl.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/MovieDao.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/MovieDaoImpl.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Actor.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Customer.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Hall.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Movie.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Reservation.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Screening.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Seat.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Staff.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/util/DatabaseConnection.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/view/CustomerView.java

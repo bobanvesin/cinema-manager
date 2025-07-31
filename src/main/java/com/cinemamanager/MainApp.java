@@ -1,17 +1,21 @@
 package com.cinemamanager;
 
+import com.cinemamanager.controller.CustomerController;
+import com.cinemamanager.view.CustomerView;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 public class MainApp extends Application {
 
 	@Override
 	public void start(Stage primaryStage) {
-		Label label = new Label("Hello, Cinema Manager App!");
-		Scene scene = new Scene(label, 400, 200);
-		primaryStage.setTitle("Cinema Manager");
+		CustomerView view = new CustomerView();
+		new CustomerController(view); // wires up logic
+
+		Scene scene = new Scene(view, 600, 500);
+		primaryStage.setTitle("Cinema Manager - Customer Management");
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}

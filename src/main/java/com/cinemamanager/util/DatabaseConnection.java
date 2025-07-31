@@ -1,5 +1,7 @@
 package com.cinemamanager.util;
 
+//Util class
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;

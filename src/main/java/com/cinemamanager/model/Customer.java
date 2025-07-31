@@ -1,19 +1,33 @@
 package com.cinemamanager.model;
 
 public class Customer {
-	private int customerId;
+	private int id;
 	private String firstName;
 	private String lastName;
 	private String email;
-	private String phone;
 
-	// Getters and Setters
-	public int getCustomerId() {
-		return customerId;
+	// ✅ Full constructor
+	public Customer(int id, String firstName, String lastName, String email) {
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
 	}
 
-	public void setCustomerId(int customerId) {
-		this.customerId = customerId;
+	// ✅ Constructor without ID (for inserts)
+	public Customer(String firstName, String lastName, String email) {
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
+	}
+
+	// ✅ Getters and setters
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	public String getFirstName() {
@@ -38,13 +52,5 @@ public class Customer {
 
 	public void setEmail(String email) {
 		this.email = email;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
 	}
 }
