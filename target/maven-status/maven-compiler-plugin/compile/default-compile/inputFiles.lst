@@ -12,5 +12,6 @@
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Screening.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Seat.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Staff.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/util/AlertUtils.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/util/DatabaseConnection.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/view/CustomerView.java

@@ -7,6 +7,7 @@ com/cinemamanager/model/Customer.class
 com/cinemamanager/model/Screening.class
 com/cinemamanager/MainApp.class
 com/cinemamanager/controller/CustomerController.class
+com/cinemamanager/util/AlertUtils.class
 com/cinemamanager/util/DatabaseConnection.class
 com/cinemamanager/dao/CustomerDaoImpl.class
 com/cinemamanager/dao/CustomerDao.class
