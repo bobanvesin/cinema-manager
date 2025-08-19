@@ -1,9 +1,14 @@
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/MainApp.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/controller/AppController.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/controller/CustomerController.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/controller/MovieController.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/controller/ReservationsController.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/CustomerDao.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/CustomerDaoImpl.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/MovieDao.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/MovieDaoImpl.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/ReservationsDao.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/dao/ReservationsDaoImpl.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Actor.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Customer.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/model/Hall.java
@@ -15,3 +20,6 @@
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/util/AlertUtils.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/util/DatabaseConnection.java
 /Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/view/CustomerView.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/view/MainView.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/view/MovieView.java
+/Users/bobanvesin/eclipse-workspace/cinema-manager/src/main/java/com/cinemamanager/view/ReservationView.java
