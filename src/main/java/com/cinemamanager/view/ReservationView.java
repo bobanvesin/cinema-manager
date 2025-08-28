@@ -1,13 +1,11 @@
 package com.cinemamanager.view;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import com.cinemamanager.model.Customer;
-import com.cinemamanager.model.Movie;
 import com.cinemamanager.model.Reservation;
+import com.cinemamanager.model.Screening;
 
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,10 +14,8 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.Spinner;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.GridPane;
@@ -30,10 +26,7 @@ public class ReservationView extends VBox {
 
 	// Top controls (selection/form)
 	private final ComboBox<Customer> customerCombo = new ComboBox<>();
-	private final ComboBox<Movie> movieCombo = new ComboBox<>();
-	private final DatePicker datePicker = new DatePicker();
-	private final Spinner<Integer> hourSpinner = new Spinner<>(0, 23, 19);
-	private final Spinner<Integer> minuteSpinner = new Spinner<>(0, 59, 0);
+	private final ComboBox<Screening> screeningCombo = new ComboBox<>();
 
 	// Action buttons
 	private final Button addButton = new Button("Add");
@@ -44,6 +37,9 @@ public class ReservationView extends VBox {
 	private final TableView<Reservation> reservationTable = new TableView<>();
 	private final ObservableList<Reservation> reservationData = FXCollections.observableArrayList();
 
+	// Formatting for screening display
+	private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
 	public ReservationView() {
 		setSpacing(10);
 		setPadding(new Insets(15));
@@ -51,11 +47,9 @@ public class ReservationView extends VBox {
 		Label header = new Label("Reservations");
 		header.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-		// --- Customer & Movie pickers
+		// --- Customer picker
 		customerCombo.setPromptText("Select customer");
-		customerCombo.setMinWidth(220);
-		// show customer nicely: First Last (email) — assuming Customer has these
-		// getters
+		customerCombo.setMinWidth(260);
 		customerCombo.setCellFactory(cb -> new ListCell<>() {
 			@Override
 			protected void updateItem(Customer c, boolean empty) {
@@ -73,30 +67,23 @@ public class ReservationView extends VBox {
 			}
 		});
 
-		movieCombo.setPromptText("Select movie");
-		movieCombo.setMinWidth(220);
-		movieCombo.setCellFactory(cb -> new ListCell<>() {
+		// --- Screening picker (uses Screening fields directly)
+		screeningCombo.setPromptText("Select screening");
+		screeningCombo.setMinWidth(360);
+		screeningCombo.setCellFactory(cb -> new ListCell<>() {
 			@Override
-			protected void updateItem(Movie m, boolean empty) {
-				super.updateItem(m, empty);
-				setText(empty || m == null ? null : m.getTitle() + " (" + m.getReleaseYear() + ")");
+			protected void updateItem(Screening s, boolean empty) {
+				super.updateItem(s, empty);
+				setText(formatScreeningCell(s, empty));
 			}
 		});
-		movieCombo.setButtonCell(new ListCell<>() {
+		screeningCombo.setButtonCell(new ListCell<>() {
 			@Override
-			protected void updateItem(Movie m, boolean empty) {
-				super.updateItem(m, empty);
-				setText(empty || m == null ? "Select movie" : m.getTitle() + " (" + m.getReleaseYear() + ")");
+			protected void updateItem(Screening s, boolean empty) {
+				super.updateItem(s, empty);
+				setText(empty || s == null ? "Select screening" : basicScreeningLabel(s));
 			}
 		});
-
-		// --- Date & Time
-		datePicker.setPromptText("Date");
-		hourSpinner.setEditable(true);
-		minuteSpinner.setEditable(true);
-
-		HBox whenRow = new HBox(10, new Label("Date:"), datePicker, new Label("Time:"), hourSpinner, new Label(":"),
-				minuteSpinner);
 
 		// --- Actions
 		HBox actions = new HBox(10, addButton, updateButton, deleteButton);
@@ -107,12 +94,11 @@ public class ReservationView extends VBox {
 		form.setVgap(10);
 		form.add(new Label("Customer:"), 0, 0);
 		form.add(customerCombo, 1, 0);
-		form.add(new Label("Movie:"), 0, 1);
-		form.add(movieCombo, 1, 1);
-		form.add(whenRow, 1, 2);
+		form.add(new Label("Screening:"), 0, 1);
+		form.add(screeningCombo, 1, 1);
 
 		VBox rightPane = new VBox(12, form, actions);
-		rightPane.setPrefWidth(420);
+		rightPane.setPrefWidth(480);
 
 		// --- Table (left)
 		reservationTable.setPlaceholder(new Label("No reservations yet."));
@@ -142,23 +128,36 @@ public class ReservationView extends VBox {
 		HBox center = new HBox(20, reservationTable, rightPane);
 		getChildren().addAll(header, center);
 
-		// When a row is selected, reflect it into the form (best-effort; needs
-		// controller to look up objects)
+		// Reflect selected row -> form (best-effort by IDs)
 		reservationTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, sel) -> {
 			if (sel == null) {
 				clearForm();
 				return;
 			}
-			// Leave customer/movie selection to controller (it can map IDs to actual
-			// objects).
-			// We only set date/time here:
-			if (sel.getReservationTime() != null) {
-				LocalDateTime dt = sel.getReservationTime();
-				datePicker.setValue(dt.toLocalDate());
-				hourSpinner.getValueFactory().setValue(dt.getHour());
-				minuteSpinner.getValueFactory().setValue(dt.getMinute());
+			// Try to select matching customer
+			if (sel.getCustomerId() > 0) {
+				customerCombo.getItems().stream().filter(c -> c.getId() == sel.getCustomerId()).findFirst()
+						.ifPresent(c -> customerCombo.getSelectionModel().select(c));
+			}
+			// Try to select matching screening
+			if (sel.getScreeningId() > 0) {
+				screeningCombo.getItems().stream().filter(s -> s.getScreeningId() == sel.getScreeningId()).findFirst()
+						.ifPresent(s -> screeningCombo.getSelectionModel().select(s));
 			}
 		});
+	}
+
+	// --- Helpers to format screening cells ---
+	private String formatScreeningCell(Screening s, boolean empty) {
+		if (empty || s == null)
+			return null;
+		return basicScreeningLabel(s);
+	}
+
+	private String basicScreeningLabel(Screening s) {
+		String start = s.getStartTime() == null ? "?" : DT.format(s.getStartTime());
+		String end = s.getEndTime() == null ? "?" : DT.format(s.getEndTime());
+		return "Movie #" + s.getMovieId() + " | Hall #" + s.getHallId() + " | " + start + " → " + end;
 	}
 
 	// --- Public API for controller ---
@@ -171,11 +170,15 @@ public class ReservationView extends VBox {
 	/** Provide customers to choose from. */
 	public void setCustomers(List<Customer> customers) {
 		customerCombo.setItems(FXCollections.observableArrayList(customers));
+		if (!customers.isEmpty())
+			customerCombo.getSelectionModel().selectFirst();
 	}
 
-	/** Provide movies to choose from. */
-	public void setMovies(List<Movie> movies) {
-		movieCombo.setItems(FXCollections.observableArrayList(movies));
+	/** Provide screenings to choose from. */
+	public void setScreenings(List<Screening> screenings) {
+		screeningCombo.setItems(FXCollections.observableArrayList(screenings));
+		if (!screenings.isEmpty())
+			screeningCombo.getSelectionModel().selectFirst();
 	}
 
 	/** Returns the currently selected customer (may be null). */
@@ -183,35 +186,15 @@ public class ReservationView extends VBox {
 		return customerCombo.getSelectionModel().getSelectedItem();
 	}
 
-	/** Returns the currently selected movie (may be null). */
-	public Movie getSelectedMovie() {
-		return movieCombo.getSelectionModel().getSelectedItem();
-	}
-
-	/**
-	 * Returns a composed LocalDateTime from the pickers (may be null if date
-	 * missing).
-	 */
-	public LocalDateTime getSelectedDateTime() {
-		LocalDate date = datePicker.getValue();
-		if (date == null)
-			return null;
-		Integer h = hourSpinner.getValue();
-		Integer m = minuteSpinner.getValue();
-		if (h == null)
-			h = 0;
-		if (m == null)
-			m = 0;
-		return LocalDateTime.of(date, LocalTime.of(h, m));
+	/** Returns the currently selected screening (may be null). */
+	public Screening getSelectedScreening() {
+		return screeningCombo.getSelectionModel().getSelectedItem();
 	}
 
 	/** Clears form inputs. */
 	public void clearForm() {
 		customerCombo.getSelectionModel().clearSelection();
-		movieCombo.getSelectionModel().clearSelection();
-		datePicker.setValue(null);
-		hourSpinner.getValueFactory().setValue(0);
-		minuteSpinner.getValueFactory().setValue(0);
+		screeningCombo.getSelectionModel().clearSelection();
 		reservationTable.getSelectionModel().clearSelection();
 	}
 
@@ -230,5 +213,15 @@ public class ReservationView extends VBox {
 
 	public TableView<Reservation> getReservationTable() {
 		return reservationTable;
+	}
+
+	/** Expose the customer ComboBox for selection control in the controller. */
+	public ComboBox<Customer> getCustomerCombo() {
+		return customerCombo;
+	}
+
+	/** Expose the screening ComboBox for selection control in the controller. */
+	public ComboBox<Screening> getScreeningCombo() {
+		return screeningCombo;
 	}
 }

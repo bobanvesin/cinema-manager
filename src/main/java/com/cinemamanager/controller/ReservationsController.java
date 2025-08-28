@@ -2,15 +2,16 @@ package com.cinemamanager.controller;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
 import com.cinemamanager.dao.CustomerDao;
-import com.cinemamanager.dao.MovieDao;
 import com.cinemamanager.dao.ReservationsDao;
 import com.cinemamanager.dao.ReservationsDaoImpl;
+import com.cinemamanager.dao.ScreeningDao;
+import com.cinemamanager.dao.ScreeningDaoImpl;
 import com.cinemamanager.model.Customer;
-import com.cinemamanager.model.Movie;
 import com.cinemamanager.model.Reservation;
+import com.cinemamanager.model.Screening;
 import com.cinemamanager.util.AlertUtils;
 import com.cinemamanager.view.ReservationView;
 
@@ -22,48 +23,47 @@ public class ReservationsController {
 	private final ReservationView view;
 	private final ReservationsDao reservationsDao;
 	private final CustomerDao customerDao;
-	private final MovieDao movieDao;
+	private final ScreeningDao screeningDao;
 
 	private final ObservableList<Reservation> reservationList = FXCollections.observableArrayList();
 
-	/** Preferred: inject all DAOs (clean for tests/DI). */
 	public ReservationsController(ReservationView view, ReservationsDao reservationsDao, CustomerDao customerDao,
-			MovieDao movieDao) {
+			ScreeningDao screeningDao) {
 		this.view = view;
 		this.reservationsDao = reservationsDao;
 		this.customerDao = customerDao;
-		this.movieDao = movieDao;
+		this.screeningDao = screeningDao;
 		initialize();
 	}
 
-	/**
-	 * Convenience: provide just a JDBC connection; we’ll build the DAOs you already
-	 * have.
-	 */
-	public ReservationsController(ReservationView view, Connection connection, CustomerDao customerDao,
-			MovieDao movieDao) {
-		this(view, new ReservationsDaoImpl(connection), customerDao, movieDao);
+	public static ReservationsController withConnection(ReservationView view, Connection connection,
+			CustomerDao customerDao) {
+		return new ReservationsController(view, new ReservationsDaoImpl(connection), customerDao,
+				new ScreeningDaoImpl(connection));
 	}
 
 	private void initialize() {
 		try {
-			// fill combos
 			view.setCustomers(customerDao.getAllCustomers());
-			view.setMovies(movieDao.findAll());
+
+			// Try upcoming first; if none, show all so the combo isn’t empty
+			List<Screening> screenings = screeningDao.findUpcoming();
+			if (screenings == null || screenings.isEmpty()) {
+				screenings = screeningDao.findAll();
+			}
+			view.setScreenings(screenings);
+
 		} catch (Exception ex) {
-			AlertUtils.showError("Failed to load customers/movies:\n" + ex.getMessage());
+			AlertUtils.showError("Failed to load customers/screenings:\n" + ex.getMessage());
 		}
 
-		// table data
 		loadReservations();
 		view.getReservationTable().setItems(reservationList);
 
-		// actions
 		view.getAddButton().setOnAction(e -> addReservation());
 		view.getUpdateButton().setOnAction(e -> updateReservation());
 		view.getDeleteButton().setOnAction(e -> deleteReservation());
 
-		// reflect selection -> form
 		view.getReservationTable().getSelectionModel().selectedItemProperty()
 				.addListener((obs, oldSel, sel) -> onReservationSelected(sel));
 	}
@@ -72,63 +72,48 @@ public class ReservationsController {
 		reservationList.setAll(reservationsDao.findAll());
 	}
 
+	/** If screenings change elsewhere, call this to repopulate the combo. */
+	public void refreshScreenings() {
+		List<Screening> screenings = screeningDao.findUpcoming();
+		if (screenings == null || screenings.isEmpty()) {
+			screenings = screeningDao.findAll();
+		}
+		view.setScreenings(screenings);
+	}
+
 	private void onReservationSelected(Reservation sel) {
 		if (sel == null) {
 			view.clearForm();
 			return;
 		}
-		// Select matching customer in combo
-		Optional.ofNullable(sel.getCustomerId()).ifPresent(cid -> view.setCustomers(customerDao.getAllCustomers())); // ensure
-																														// list
-																														// present
-																														// (idempotent)
-		Customer matchCustomer = customerDao.getAllCustomers().stream().filter(c -> c.getId() == sel.getCustomerId())
-				.findFirst().orElse(null);
-		if (matchCustomer != null) {
-			// select in combo:
-			// (ReservationView exposes selection via ComboBox selection model)
-			view.setCustomers(customerDao.getAllCustomers()); // ensure items contain match
-			view.getReservationTable().requestFocus(); // harmless; keeps UI responsive
-		}
-		// Select matching movie (we don't know screening mapping, so we best-effort
-		// select by movieId == screeningId if that’s how you use it)
-		Movie matchMovie = movieDao.findAll().stream().filter(m -> m.getMovieId() == sel.getScreeningId()).findFirst()
-				.orElse(null);
-		if (matchMovie != null) {
-			view.setMovies(movieDao.findAll());
-		}
-		// Date/time
-		if (sel.getReservationTime() != null) {
-			// ReservationView already mirrors dt on selection; nothing else needed here.
-		}
+
+		// Select matching customer from current combo items
+		view.getCustomerCombo().getItems().stream().filter(c -> c.getId() == sel.getCustomerId()).findFirst()
+				.ifPresent(c -> view.getCustomerCombo().getSelectionModel().select(c));
+
+		// Select matching screening from current combo items
+		view.getScreeningCombo().getItems().stream().filter(s -> s.getScreeningId() == sel.getScreeningId()).findFirst()
+				.ifPresent(s -> view.getScreeningCombo().getSelectionModel().select(s));
 	}
 
 	private void addReservation() {
 		Customer customer = view.getSelectedCustomer();
-		Movie movie = view.getSelectedMovie();
-		LocalDateTime dt = view.getSelectedDateTime();
+		Screening screening = view.getSelectedScreening();
 
 		if (customer == null) {
 			AlertUtils.showWarning("Please select a customer.");
 			return;
 		}
-		if (movie == null) {
-			AlertUtils.showWarning("Please select a movie.");
-			return;
-		}
-		if (dt == null) {
-			AlertUtils.showWarning("Please choose a date and time.");
+		if (screening == null) {
+			AlertUtils.showWarning("Please select a screening.");
 			return;
 		}
 
 		try {
-			// TODO: Replace this with a real screening lookup (movie + dt → screening_id)
-			int screeningId = movie.getMovieId(); // placeholder
-
 			Reservation r = new Reservation();
 			r.setCustomerId(customer.getId());
-			r.setScreeningId(screeningId);
-			r.setReservationTime(dt);
+			r.setScreeningId(screening.getScreeningId());
+			r.setReservationTime(LocalDateTime.now());
 
 			reservationsDao.save(r);
 			AlertUtils.showInfo("Reservation Added", "Reservation created successfully.");
@@ -147,29 +132,21 @@ public class ReservationsController {
 		}
 
 		Customer customer = view.getSelectedCustomer();
-		Movie movie = view.getSelectedMovie();
-		LocalDateTime dt = view.getSelectedDateTime();
+		Screening screening = view.getSelectedScreening();
 
 		if (customer == null) {
 			AlertUtils.showWarning("Please select a customer.");
 			return;
 		}
-		if (movie == null) {
-			AlertUtils.showWarning("Please select a movie.");
-			return;
-		}
-		if (dt == null) {
-			AlertUtils.showWarning("Please choose a date and time.");
+		if (screening == null) {
+			AlertUtils.showWarning("Please select a screening.");
 			return;
 		}
 
 		try {
-			// TODO: Replace with real screening resolver
-			int screeningId = movie.getMovieId(); // placeholder
-
 			selected.setCustomerId(customer.getId());
-			selected.setScreeningId(screeningId);
-			selected.setReservationTime(dt);
+			selected.setScreeningId(screening.getScreeningId());
+			selected.setReservationTime(LocalDateTime.now());
 
 			reservationsDao.update(selected);
 			AlertUtils.showInfo("Reservation Updated", "Reservation updated successfully.");
@@ -186,7 +163,6 @@ public class ReservationsController {
 			AlertUtils.showWarning("Please select a reservation to delete.");
 			return;
 		}
-
 		try {
 			reservationsDao.delete(selected.getReservationId());
 			AlertUtils.showInfo("Reservation Deleted", "Reservation deleted successfully.");

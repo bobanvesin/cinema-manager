@@ -9,10 +9,14 @@ import java.util.List;
 
 import com.cinemamanager.dao.CustomerDao;
 import com.cinemamanager.dao.CustomerDaoImpl;
+import com.cinemamanager.dao.HallDao;
+import com.cinemamanager.dao.HallDaoImpl;
 import com.cinemamanager.dao.MovieDao;
 import com.cinemamanager.dao.MovieDaoImpl;
 import com.cinemamanager.dao.ReservationsDao;
 import com.cinemamanager.dao.ReservationsDaoImpl;
+import com.cinemamanager.dao.ScreeningDao;
+import com.cinemamanager.dao.ScreeningDaoImpl;
 import com.cinemamanager.model.Customer;
 import com.cinemamanager.model.Movie;
 import com.cinemamanager.model.Reservation;
@@ -29,10 +33,12 @@ public class AppController {
 	private final MainView mainView;
 	private Connection conn;
 
-	// DAOs (used by export + reservations controller)
+	// DAOs (used by export + controllers)
 	private CustomerDao customerDao;
 	private MovieDao movieDao;
 	private ReservationsDao reservationsDao;
+	private ScreeningDao screeningDao;
+	private HallDao hallDao;
 
 	public AppController(MainView mainView) {
 		this.mainView = mainView;
@@ -42,18 +48,26 @@ public class AppController {
 		// one shared connection
 		conn = DatabaseConnection.getConnection();
 
-		// controllers
+		// Controllers that don't need DB
 		new CustomerController(mainView.getCustomerView());
 
 		if (conn != null) {
+			// Create DAOs that need a connection
 			movieDao = new MovieDaoImpl(conn);
 			reservationsDao = new ReservationsDaoImpl(conn);
-			customerDao = new CustomerDaoImpl(); // your impl didn't need a Connection
+			screeningDao = new ScreeningDaoImpl(conn);
+			hallDao = new HallDaoImpl(conn);
 
+			// Your CustomerDaoImpl doesn't require a Connection
+			customerDao = new CustomerDaoImpl();
+
+			// Wire controllers (pass interfaces)
 			new MovieController(mainView.getMovieView(), movieDao);
-			new ReservationsController(mainView.getReservationView(), reservationsDao, customerDao, movieDao);
+			new ReservationsController(mainView.getReservationView(), reservationsDao, customerDao, screeningDao);
+			new SchedullingController(mainView.getScheduleScreeningView(), movieDao, hallDao, screeningDao);
 		} else {
-			// still init DAOs we can (so "Export" can at least export customers)
+			// Still init DAOs that don't require DB so "Export" can at least export
+			// customers
 			customerDao = new CustomerDaoImpl();
 		}
 
@@ -89,11 +103,10 @@ public class AppController {
 			return;
 
 		try {
-			// Make sure DAOs exist (movies/reservations require DB)
+			// Ensure DAOs exist (movies/reservations require DB)
 			if (customerDao == null)
 				customerDao = new CustomerDaoImpl();
 			if (movieDao == null || reservationsDao == null) {
-				// try to open a temporary connection for export
 				try (Connection tmp = DatabaseConnection.getConnection()) {
 					if (tmp != null) {
 						if (movieDao == null)

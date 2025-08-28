@@ -18,6 +18,7 @@ public class MainView extends VBox {
 	private final CustomerView customerView = new CustomerView();
 	private final MovieView movieView = new MovieView();
 	private final ReservationView reservationView = new ReservationView();
+	private final ScheduleScreeningView scheduleScreeningView = new ScheduleScreeningView(); // NEW
 
 	// Menu + items
 	private final MenuBar menuBar = new MenuBar();
@@ -32,7 +33,6 @@ public class MainView extends VBox {
 
 	public MainView() {
 		// --- Menu bar ---
-		// Helpful on macOS: shows menus in the system bar
 		menuBar.setUseSystemMenuBar(true);
 
 		// Keyboard shortcuts
@@ -55,7 +55,10 @@ public class MainView extends VBox {
 		Tab reservationsTab = new Tab("Reservations", reservationView);
 		reservationsTab.setClosable(false);
 
-		tabPane.getTabs().addAll(customersTab, moviesTab, reservationsTab);
+		Tab scheduleScreeningTab = new Tab("Schedule Screening", scheduleScreeningView); // NEW
+		scheduleScreeningTab.setClosable(false);
+
+		tabPane.getTabs().addAll(customersTab, moviesTab, reservationsTab, scheduleScreeningTab);
 
 		// Layout: menu on top, tabs below
 		getChildren().addAll(menuBar, tabPane);
@@ -75,6 +78,10 @@ public class MainView extends VBox {
 
 	public ReservationView getReservationView() {
 		return reservationView;
+	}
+
+	public ScheduleScreeningView getScheduleScreeningView() { // NEW
+		return scheduleScreeningView;
 	}
 
 	public TabPane getTabPane() {
