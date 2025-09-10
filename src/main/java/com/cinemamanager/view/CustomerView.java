@@ -1,6 +1,7 @@
 package com.cinemamanager.view;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -8,6 +9,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class CustomerView extends VBox {
@@ -19,14 +21,27 @@ public class CustomerView extends VBox {
 	private Button addButton;
 	private Button updateButton;
 	private Button deleteButton;
+	private Button refreshButton;
 
 	public CustomerView() {
 		setSpacing(10);
 		setPadding(new Insets(15));
 
+		// Title + Refresh button
 		Label title = new Label("Customer Management");
 		title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-		getChildren().add(title);
+
+		refreshButton = new Button("Refresh");
+		HBox topBar = new HBox();
+		topBar.setAlignment(Pos.CENTER_LEFT);
+		topBar.setSpacing(10);
+
+		// Push refresh button to the right
+		HBox spacer = new HBox();
+		HBox.setHgrow(spacer, Priority.ALWAYS);
+
+		topBar.getChildren().addAll(title, spacer, refreshButton);
+		getChildren().add(topBar);
 
 		// Table
 		customerTable = new TableView<>();
@@ -112,5 +127,9 @@ public class CustomerView extends VBox {
 
 	public Button getDeleteButton() {
 		return deleteButton;
+	}
+
+	public Button getRefreshButton() {
+		return refreshButton;
 	}
 }

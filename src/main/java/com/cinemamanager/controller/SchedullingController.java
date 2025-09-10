@@ -36,8 +36,25 @@ public class SchedullingController {
 			List<Hall> halls = hallDao.findAll();
 			view.setMovies(movies);
 			view.setHalls(halls);
+
+			// 🔹 Load existing screenings into the table
+			List<Screening> screenings = screeningDao.findAll();
+			for (Screening s : screenings) {
+				// lookup movie and hall names
+				String movieTitle = movies.stream().filter(m -> m.getMovieId() == s.getMovieId()).map(Movie::getTitle)
+						.findFirst().orElse("Unknown");
+
+				String hallName = halls.stream().filter(h -> h.getHallId() == s.getHallId()).map(Hall::getName)
+						.findFirst().orElse("Unknown");
+
+				view.getItems().add(new ScheduleScreeningView.ScreeningRow(movieTitle, hallName,
+						s.getStartTime().toLocalDate(), s.getStartTime().toLocalTime(), 120.0 // TODO: replace if you
+																								// persist price later
+				));
+			}
+
 		} catch (Exception ex) {
-			AlertUtils.showError("Failed to load movies/halls:\n" + ex.getMessage());
+			AlertUtils.showError("Failed to load movies/halls/screenings:\n" + ex.getMessage());
 		}
 
 		// IMPORTANT: override the UI-only handler from the view with a DB-backed one

@@ -46,7 +46,7 @@ public class ReservationsController {
 		try {
 			view.setCustomers(customerDao.getAllCustomers());
 
-			// Try upcoming first; if none, show all so the combo isn’t empty
+			// Try upcoming first; if none, show all
 			List<Screening> screenings = screeningDao.findUpcoming();
 			if (screenings == null || screenings.isEmpty()) {
 				screenings = screeningDao.findAll();
@@ -63,6 +63,7 @@ public class ReservationsController {
 		view.getAddButton().setOnAction(e -> addReservation());
 		view.getUpdateButton().setOnAction(e -> updateReservation());
 		view.getDeleteButton().setOnAction(e -> deleteReservation());
+		view.getRefreshButton().setOnAction(e -> refreshReservations()); // 🔹 new
 
 		view.getReservationTable().getSelectionModel().selectedItemProperty()
 				.addListener((obs, oldSel, sel) -> onReservationSelected(sel));
@@ -70,6 +71,25 @@ public class ReservationsController {
 
 	private void loadReservations() {
 		reservationList.setAll(reservationsDao.findAll());
+	}
+
+	private void refreshReservations() {
+		// Reload reservations
+		loadReservations();
+
+		// Reload customers
+		List<Customer> customers = customerDao.getAllCustomers();
+		view.setCustomers(customers);
+
+		// Reload screenings (upcoming preferred)
+		List<Screening> screenings = screeningDao.findUpcoming();
+		if (screenings == null || screenings.isEmpty()) {
+			screenings = screeningDao.findAll();
+		}
+		view.setScreenings(screenings);
+
+		// Clear form after refresh
+		view.clearForm();
 	}
 
 	/** If screenings change elsewhere, call this to repopulate the combo. */
@@ -87,11 +107,11 @@ public class ReservationsController {
 			return;
 		}
 
-		// Select matching customer from current combo items
+		// Select matching customer
 		view.getCustomerCombo().getItems().stream().filter(c -> c.getId() == sel.getCustomerId()).findFirst()
 				.ifPresent(c -> view.getCustomerCombo().getSelectionModel().select(c));
 
-		// Select matching screening from current combo items
+		// Select matching screening
 		view.getScreeningCombo().getItems().stream().filter(s -> s.getScreeningId() == sel.getScreeningId()).findFirst()
 				.ifPresent(s -> view.getScreeningCombo().getSelectionModel().select(s));
 	}

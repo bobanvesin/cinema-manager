@@ -12,6 +12,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -32,12 +33,16 @@ public class ReservationView extends VBox {
 	private final Button addButton = new Button("Add");
 	private final Button updateButton = new Button("Update");
 	private final Button deleteButton = new Button("Delete");
+	private final Button refreshButton = new Button("Refresh Table");
 
 	// Table
 	private final TableView<Reservation> reservationTable = new TableView<>();
 	private final ObservableList<Reservation> reservationData = FXCollections.observableArrayList();
 
-	// Formatting for screening display
+	// Customers list for lookup
+	private List<Customer> customers;
+
+	// Date formatting
 	private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
 	public ReservationView() {
@@ -67,28 +72,28 @@ public class ReservationView extends VBox {
 			}
 		});
 
-		// --- Screening picker (uses Screening fields directly)
+		// --- Screening picker
 		screeningCombo.setPromptText("Select screening");
 		screeningCombo.setMinWidth(360);
 		screeningCombo.setCellFactory(cb -> new ListCell<>() {
 			@Override
 			protected void updateItem(Screening s, boolean empty) {
 				super.updateItem(s, empty);
-				setText(formatScreeningCell(s, empty));
+				setText(formatScreeningForCombo(s, empty));
 			}
 		});
 		screeningCombo.setButtonCell(new ListCell<>() {
 			@Override
 			protected void updateItem(Screening s, boolean empty) {
 				super.updateItem(s, empty);
-				setText(empty || s == null ? "Select screening" : basicScreeningLabel(s));
+				setText(formatScreeningForCombo(s, empty));
 			}
 		});
 
 		// --- Actions
 		HBox actions = new HBox(10, addButton, updateButton, deleteButton);
 
-		// --- Form layout (top)
+		// --- Form layout (top right)
 		GridPane form = new GridPane();
 		form.setHgap(10);
 		form.setVgap(10);
@@ -109,9 +114,17 @@ public class ReservationView extends VBox {
 		idCol.setPrefWidth(70);
 		idCol.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getReservationId()));
 
-		TableColumn<Reservation, Number> customerIdCol = new TableColumn<>("Customer ID");
-		customerIdCol.setPrefWidth(110);
-		customerIdCol.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getCustomerId()));
+		TableColumn<Reservation, String> customerNameCol = new TableColumn<>("Customer");
+		customerNameCol.setPrefWidth(200);
+		customerNameCol.setCellValueFactory(c -> {
+			int customerId = c.getValue().getCustomerId();
+			if (customers != null) {
+				return new SimpleStringProperty(customers.stream().filter(cust -> cust.getId() == customerId)
+						.map(cust -> cust.getFirstName() + " " + cust.getLastName()).findFirst().orElse("Unknown"));
+			} else {
+				return new SimpleStringProperty("Unknown");
+			}
+		});
 
 		TableColumn<Reservation, Number> screeningIdCol = new TableColumn<>("Screening ID");
 		screeningIdCol.setPrefWidth(110);
@@ -122,24 +135,27 @@ public class ReservationView extends VBox {
 		timeCol.setCellValueFactory(c -> new SimpleStringProperty(
 				c.getValue().getReservationTime() != null ? c.getValue().getReservationTime().toString() : ""));
 
-		reservationTable.getColumns().addAll(idCol, customerIdCol, screeningIdCol, timeCol);
+		reservationTable.getColumns().addAll(idCol, customerNameCol, screeningIdCol, timeCol);
 
-		// --- Layout: table left, form right
-		HBox center = new HBox(20, reservationTable, rightPane);
+		// --- Table with refresh button below it
+		HBox refreshBar = new HBox(refreshButton);
+		refreshBar.setAlignment(Pos.CENTER_RIGHT);
+		VBox tableWithRefresh = new VBox(10, reservationTable, refreshBar);
+
+		// --- Layout: table + refresh (left), form (right)
+		HBox center = new HBox(20, tableWithRefresh, rightPane);
 		getChildren().addAll(header, center);
 
-		// Reflect selected row -> form (best-effort by IDs)
+		// Reflect selected row -> form
 		reservationTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, sel) -> {
 			if (sel == null) {
 				clearForm();
 				return;
 			}
-			// Try to select matching customer
-			if (sel.getCustomerId() > 0) {
-				customerCombo.getItems().stream().filter(c -> c.getId() == sel.getCustomerId()).findFirst()
-						.ifPresent(c -> customerCombo.getSelectionModel().select(c));
+			if (sel.getCustomerId() > 0 && customers != null) {
+				customers.stream().filter(cust -> cust.getId() == sel.getCustomerId()).findFirst()
+						.ifPresent(cust -> customerCombo.getSelectionModel().select(cust));
 			}
-			// Try to select matching screening
 			if (sel.getScreeningId() > 0) {
 				screeningCombo.getItems().stream().filter(s -> s.getScreeningId() == sel.getScreeningId()).findFirst()
 						.ifPresent(s -> screeningCombo.getSelectionModel().select(s));
@@ -147,58 +163,51 @@ public class ReservationView extends VBox {
 		});
 	}
 
-	// --- Helpers to format screening cells ---
-	private String formatScreeningCell(Screening s, boolean empty) {
+	// --- Helpers
+	private String formatScreeningForCombo(Screening s, boolean empty) {
 		if (empty || s == null)
 			return null;
-		return basicScreeningLabel(s);
-	}
 
-	private String basicScreeningLabel(Screening s) {
 		String start = s.getStartTime() == null ? "?" : DT.format(s.getStartTime());
 		String end = s.getEndTime() == null ? "?" : DT.format(s.getEndTime());
-		return "Movie #" + s.getMovieId() + " | Hall #" + s.getHallId() + " | " + start + " → " + end;
+
+		// Better label: "Movie X @ Hall Y (start → end)"
+		return "Movie #" + s.getMovieId() + " @ Hall #" + s.getHallId() + " (" + start + " → " + end + ")";
 	}
 
-	// --- Public API for controller ---
-
-	/** Replaces all rows in the table. */
+	// --- Public API
 	public void setReservations(List<Reservation> reservations) {
 		reservationData.setAll(reservations);
 	}
 
-	/** Provide customers to choose from. */
 	public void setCustomers(List<Customer> customers) {
+		this.customers = customers;
 		customerCombo.setItems(FXCollections.observableArrayList(customers));
 		if (!customers.isEmpty())
 			customerCombo.getSelectionModel().selectFirst();
 	}
 
-	/** Provide screenings to choose from. */
 	public void setScreenings(List<Screening> screenings) {
 		screeningCombo.setItems(FXCollections.observableArrayList(screenings));
 		if (!screenings.isEmpty())
 			screeningCombo.getSelectionModel().selectFirst();
 	}
 
-	/** Returns the currently selected customer (may be null). */
 	public Customer getSelectedCustomer() {
 		return customerCombo.getSelectionModel().getSelectedItem();
 	}
 
-	/** Returns the currently selected screening (may be null). */
 	public Screening getSelectedScreening() {
 		return screeningCombo.getSelectionModel().getSelectedItem();
 	}
 
-	/** Clears form inputs. */
 	public void clearForm() {
 		customerCombo.getSelectionModel().clearSelection();
 		screeningCombo.getSelectionModel().clearSelection();
 		reservationTable.getSelectionModel().clearSelection();
 	}
 
-	// Getters for buttons & table
+	// Getters
 	public Button getAddButton() {
 		return addButton;
 	}
@@ -211,16 +220,18 @@ public class ReservationView extends VBox {
 		return deleteButton;
 	}
 
+	public Button getRefreshButton() {
+		return refreshButton;
+	}
+
 	public TableView<Reservation> getReservationTable() {
 		return reservationTable;
 	}
 
-	/** Expose the customer ComboBox for selection control in the controller. */
 	public ComboBox<Customer> getCustomerCombo() {
 		return customerCombo;
 	}
 
-	/** Expose the screening ComboBox for selection control in the controller. */
 	public ComboBox<Screening> getScreeningCombo() {
 		return screeningCombo;
 	}

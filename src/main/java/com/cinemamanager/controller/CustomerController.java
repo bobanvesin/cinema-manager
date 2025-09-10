@@ -22,9 +22,6 @@ public class CustomerController {
 		initialize();
 	}
 
-	/**
-	 * 
-	 */
 	private void initialize() {
 		loadCustomers();
 
@@ -33,6 +30,7 @@ public class CustomerController {
 		view.getAddButton().setOnAction(e -> addCustomer());
 		view.getUpdateButton().setOnAction(e -> updateCustomer());
 		view.getDeleteButton().setOnAction(e -> deleteCustomer());
+		view.getRefreshButton().setOnAction(e -> refreshCustomers()); // 🔹 new
 
 		view.getCustomerTable().setOnMouseClicked(event -> {
 			Customer selected = view.getCustomerTable().getSelectionModel().getSelectedItem();
@@ -82,6 +80,11 @@ public class CustomerController {
 			loadCustomers();
 			clearForm();
 		}
+	}
+
+	private void refreshCustomers() {
+		loadCustomers();
+		clearForm(); // optional, keeps form clean
 	}
 
 	private void clearForm() {
