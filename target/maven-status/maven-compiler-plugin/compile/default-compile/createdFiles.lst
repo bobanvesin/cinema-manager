@@ -1,6 +1,4 @@
 com/cinemamanager/dao/HallDaoImpl.class
-com/cinemamanager/model/Seat.class
-com/cinemamanager/model/Actor.class
 com/cinemamanager/view/ScheduleScreeningView$4.class
 com/cinemamanager/view/ReservationView$2.class
 com/cinemamanager/view/ReservationView.class
@@ -40,5 +38,4 @@ com/cinemamanager/util/DatabaseConnection.class
 com/cinemamanager/view/ReservationView$3.class
 com/cinemamanager/dao/ReservationsDao.class
 com/cinemamanager/dao/CustomerDao.class
-com/cinemamanager/model/Staff.class
 com/cinemamanager/model/Reservation.class

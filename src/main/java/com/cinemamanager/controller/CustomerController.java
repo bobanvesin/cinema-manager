@@ -22,6 +22,9 @@ public class CustomerController {
 		initialize();
 	}
 
+	/**
+	 * 
+	 */
 	private void initialize() {
 		loadCustomers();
 

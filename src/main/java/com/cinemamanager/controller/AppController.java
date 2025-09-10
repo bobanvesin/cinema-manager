@@ -94,7 +94,7 @@ public class AppController {
 		}
 	}
 
-	private void handleExport() {
+	private void handleExport() {// should have been in the specific class/package
 		Window owner = mainView.getScene() != null ? mainView.getScene().getWindow() : null;
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle("Select Export Folder");

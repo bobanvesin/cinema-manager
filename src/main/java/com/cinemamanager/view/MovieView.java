@@ -20,12 +20,38 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+/**
+ * A JavaFX view for displaying and editing movies.
+ * 
+ * <p>
+ * This class provides a table with search functionality and a details panel
+ * where users can add, update, or delete movies. The backing data is stored in
+ * an observable list with a {@link FilteredList} for live searching.
+ * </p>
+ * 
+ * <p>
+ * Typical usage:
+ * </p>
+ * 
+ * <pre>
+ * MovieView view = new MovieView();
+ * view.setMovies(movieList); // load movies
+ * </pre>
+ * 
+ * @author Boban Vesin
+ * @version 1.0
+ */
 public class MovieView extends VBox {
 
+	// --- UI components ---
+
+	/** Table displaying movies. */
 	private final TableView<Movie> movieTable = new TableView<>();
+
+	/** Text field for live searching by title. */
 	private final TextField searchField = new TextField();
 
-	// detail fields (editable)
+	// Detail fields for the selected movie (editable)
 	private final TextField titleField = new TextField();
 	private final TextArea descriptionArea = new TextArea();
 	private final TextField genreField = new TextField();
@@ -33,15 +59,23 @@ public class MovieView extends VBox {
 	private final TextField durationField = new TextField();
 	private final TextField releaseYearField = new TextField();
 
-	// action buttons
+	// Action buttons
 	private final Button addButton = new Button("Add");
 	private final Button updateButton = new Button("Update");
 	private final Button deleteButton = new Button("Delete");
 
-	// backing data
+	// Backing data
 	private final ObservableList<Movie> masterData = FXCollections.observableArrayList();
 	private final FilteredList<Movie> filteredData = new FilteredList<>(masterData, p -> true);
 
+	/**
+	 * Constructs the movie view.
+	 * 
+	 * <p>
+	 * Initializes the layout with a header, a search bar, a movie table, and a
+	 * details panel with input fields and action buttons.
+	 * </p>
+	 */
 	public MovieView() {
 		setSpacing(10);
 		setPadding(new Insets(15));
@@ -49,7 +83,7 @@ public class MovieView extends VBox {
 		Label header = new Label("Movies");
 		header.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-		// --- Search box ---
+		// --- Search box setup ---
 		searchField.setPromptText("Search by title...");
 		searchField.textProperty().addListener((obs, old, val) -> {
 			String query = (val == null) ? "" : val.trim().toLowerCase();
@@ -58,7 +92,7 @@ public class MovieView extends VBox {
 
 		movieTable.setPlaceholder(new Label("No movies found (or not loaded yet)."));
 
-		// --- Table setup (same as before) ---
+		// --- Table setup ---
 		TableColumn<Movie, Number> idCol = new TableColumn<>("ID");
 		idCol.setPrefWidth(50);
 		idCol.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getMovieId()));
@@ -80,6 +114,7 @@ public class MovieView extends VBox {
 		movieTable.setPrefWidth(500);
 		movieTable.setPrefHeight(400);
 
+		// When a row is selected, show details on the right
 		movieTable.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> {
 			if (selected != null) {
 				showMovieDetails(selected);
@@ -115,21 +150,34 @@ public class MovieView extends VBox {
 		details.add(new Label("Release Year:"), 0, row);
 		details.add(releaseYearField, 1, row++);
 
-		// --- Actions under details ---
+		// --- Action buttons ---
 		HBox actions = new HBox(10, addButton, updateButton, deleteButton);
 		actions.setPadding(new Insets(10, 0, 0, 0));
 		VBox rightPane = new VBox(10, details, actions);
 
+		// Layout: table on the left, details+buttons on the right
 		HBox centerBox = new HBox(20, movieTable, rightPane);
 		centerBox.setPadding(new Insets(10));
 
 		getChildren().addAll(header, searchField, centerBox);
 	}
 
+	/**
+	 * Replaces the current list of movies with a new list.
+	 * 
+	 * @param movies list of movies to display
+	 */
 	public void setMovies(List<Movie> movies) {
 		masterData.setAll(movies);
 	}
 
+	// --- Private helpers for detail panel ---
+
+	/**
+	 * Displays the details of a selected movie in the input fields.
+	 * 
+	 * @param m the selected movie
+	 */
 	private void showMovieDetails(Movie m) {
 		titleField.setText(m.getTitle());
 		descriptionArea.setText(m.getDescription());
@@ -139,6 +187,9 @@ public class MovieView extends VBox {
 		releaseYearField.setText(String.valueOf(m.getReleaseYear()));
 	}
 
+	/**
+	 * Clears all detail input fields.
+	 */
 	private void clearDetails() {
 		titleField.clear();
 		descriptionArea.clear();
@@ -148,43 +199,74 @@ public class MovieView extends VBox {
 		releaseYearField.clear();
 	}
 
-	// --- Getters ---
+	// --- Getters (for controller wiring) ---
+
+	/**
+	 * @return the movie table
+	 */
 	public TableView<Movie> getMovieTable() {
 		return movieTable;
 	}
 
+	/**
+	 * @return the title text field
+	 */
 	public TextField getTitleField() {
 		return titleField;
 	}
 
+	/**
+	 * @return the description text area
+	 */
 	public TextArea getDescriptionArea() {
 		return descriptionArea;
 	}
 
+	/**
+	 * @return the genre text field
+	 */
 	public TextField getGenreField() {
 		return genreField;
 	}
 
+	/**
+	 * @return the language text field
+	 */
 	public TextField getLanguageField() {
 		return languageField;
 	}
 
+	/**
+	 * @return the duration text field
+	 */
 	public TextField getDurationField() {
 		return durationField;
 	}
 
+	/**
+	 * @return the release year text field
+	 */
 	public TextField getReleaseYearField() {
 		return releaseYearField;
 	}
 
+	/**
+	 * @return the "Add" button
+	 */
 	public Button getAddButton() {
 		return addButton;
 	}
 
+	/**
+	 * @return the "Update" button
+	 */
 	public Button getUpdateButton() {
 		return updateButton;
 	}
 
+	/**
+	 * @return the "Delete" button
+	 */
 	public Button getDeleteButton() {
 		return deleteButton;
 	}
