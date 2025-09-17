@@ -45,6 +45,8 @@ public class MainApp extends Application {
 		// Create the main view (layout + controllers are bootstrapped inside MainView)
 		MainView mainView = new MainView();
 
+		System.out.print("jshdgfvjy ");
+
 		// Define the scene with specified width and height
 		Scene scene = new Scene(mainView, 1200, 600);
 
